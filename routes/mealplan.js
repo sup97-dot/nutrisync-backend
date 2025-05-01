@@ -95,4 +95,29 @@ router.get('/generate-weekly-plan', async (req,res) => {
     }
 });
 
+router.get('./get user/user_id', async (req,res) => {
+
+    const {userId} = req.params;
+
+    try {
+        const [rows] = await db.promise().query(
+            `SELECT meal_plans.plan_id, meal_plans.meal_date, meal_plans.meal_type, meal_plans.calories, meal_plans.protein, meal_plans.carbs, meal_plans.fats, r.rec_name, r.image_url 
+            FROM meal_plan 
+            JOIN recipes ON meal_plans.recipe_id = recipes.recipe_id 
+            WHERE meal_plans.user_id = ? 
+            ORDER BY meal_plans.meal_date ASC, FIELD(meal_plans.meal_type, 'breakfast', 'lunch', 'dinner')`,
+            [userId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No meal plan found for this user.' });
+        }
+
+        res.json(rows);
+    } catch (err) {
+        console.error('Error fetching meal plan:', err);
+        res.status(500).json({ message: 'Failed to fetch meal plan.' });
+    }
+});
+
 module.exports = router;
